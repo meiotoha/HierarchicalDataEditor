@@ -1,0 +1,31 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local2="using:HierarchicalDataEditor.Controls">
+
+    <Style TargetType="local2:SchemaDataEditor">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local2:SchemaDataEditor">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <ItemsControl ItemsSource="{TemplateBinding SchemaItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate >
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Key}"/>
+                                        <TextBox Text="{Binding Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    
+</ResourceDictionary>

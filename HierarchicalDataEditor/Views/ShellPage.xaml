@@ -1,0 +1,64 @@
+﻿<Page
+    x:Class="HierarchicalDataEditor.Views.ShellPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:i="using:Microsoft.Xaml.Interactivity"
+    xmlns:ic="using:Microsoft.Xaml.Interactions.Core"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:winui="using:Microsoft.UI.Xaml.Controls"
+    Style="{StaticResource PageStyle}"
+    mc:Ignorable="d">
+
+    <i:Interaction.Behaviors>
+        <ic:EventTriggerBehavior EventName="Loaded">
+            <ic:InvokeCommandAction Command="{x:Bind ViewModel.LoadedCommand}" />
+        </ic:EventTriggerBehavior>
+    </i:Interaction.Behaviors>
+
+    <SplitView
+        x:Name="splitView"
+        PanePlacement="Right"
+        OpenPaneLength="400">
+        <SplitView.Pane>
+            <Frame
+                x:Name="rightFrame"
+                BorderThickness="1,1,0,0"
+                BorderBrush="Gray"
+                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" />
+        </SplitView.Pane>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <winui:MenuBar VerticalAlignment="Top">
+                <winui:MenuBarItem x:Uid="ShellMenuBarItem_File">
+                    <MenuFlyoutItem Text="New Project"  Command="{x:Bind ViewModel.NewProjectCommand}"/>
+                    <MenuFlyoutItem Text="Open Project"  Command="{x:Bind ViewModel.OpenProjectCommand}"/>
+                    <MenuFlyoutItem Text="Save Project"  Command="{x:Bind ViewModel.SaveProjectCommand}"/>
+                    <MenuFlyoutSeparator/>
+                    <MenuFlyoutItem x:Uid="ShellMenuItem_File_Exit" Command="{x:Bind ViewModel.MenuFileExitCommand}" />
+                </winui:MenuBarItem>
+                <winui:MenuBarItem Title="Edit">
+                    <MenuFlyoutItem Text="Import Schema" Command="{x:Bind ViewModel.ImportSchemaCommand}"/>
+                    <MenuFlyoutItem Text="Export Schema"  Command="{x:Bind ViewModel.ExportSchemaCommand}"/>
+                    <MenuFlyoutSeparator/>
+                    <MenuFlyoutItem Text="Import Data(Json)"  Command="{x:Bind ViewModel.ImportDataCommand}"/>
+                    <MenuFlyoutItem Text="Import Data(CSV)"  Command="{x:Bind ViewModel.ExportDataWithCSVCommand}"/>
+                    <MenuFlyoutItem Text="Export Data(Json)"  Command="{x:Bind ViewModel.ExportDataCommand}"/>
+                    <MenuFlyoutItem Text="Export Data(Template)"  Command="{x:Bind ViewModel.ExportDataWithTemplateCommand}"/>
+                </winui:MenuBarItem>
+                <winui:MenuBarItem x:Uid="ShellMenuBarItem_Views">
+                    <MenuFlyoutItem x:Uid="ShellMenuItem_Views_SchemaEditor" Command="{x:Bind ViewModel.MenuViewsSchemaEditorCommand}" />
+                    <MenuFlyoutItem x:Uid="ShellMenuItem_Views_TreeViewEditor" Command="{x:Bind ViewModel.MenuViewsTreeViewEditorCommand}" />
+                    <MenuFlyoutItem x:Uid="ShellMenuItem_Views_TemplateExporter" Command="{x:Bind ViewModel.MenuViewsTemplateExporterCommand}" />
+                </winui:MenuBarItem>
+            </winui:MenuBar>
+            <Grid Grid.Row="1">
+                <Frame x:Name="shellFrame" />
+            </Grid>
+        </Grid>
+    </SplitView>
+
+</Page>
