@@ -10,7 +10,7 @@
   <Identity
     Name="94E77D01-1221-4326-B99F-4818431327CD"
     Publisher="CN=Alex"
-    Version="1.0.4.0" />
+    Version="1.0.19.0" />
 
   <mp:PhoneIdentity PhoneProductId="94E77D01-1221-4326-B99F-4818431327CD" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -41,9 +41,6 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
-
-      <Extensions>
-      </Extensions>
     </Application>
   </Applications>
 

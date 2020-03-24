@@ -50,9 +50,9 @@ namespace HierarchicalDataEditor.Helpers
             _splitView.IsPaneOpen = true;
         }
 
-        public static async Task OpenInNewWindow(Type pageType)
+        public static async Task<ViewLifetimeControl> OpenInNewWindow(Type pageType)
         {
-            await WindowManagerService.Current.TryShowAsStandaloneAsync(pageType.Name, pageType);
+           return await WindowManagerService.Current.TryShowAsStandaloneAsync(pageType.Name, pageType);
         }
 
         public static async Task OpenInDialog(Type pageType, object parameter = null, NavigationTransitionInfo infoOverride = null)

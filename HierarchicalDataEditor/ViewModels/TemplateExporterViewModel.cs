@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
+using Windows.Storage.Provider;
+using Windows.System;
 using Windows.UI.Xaml.Controls;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
@@ -33,7 +36,7 @@ namespace HierarchicalDataEditor.ViewModels
         private async void Export()
         {
             List<string> result = new List<string>();
-            var source = GlobalDataService.Instance.CurrentProject.Nodes;
+            var source = Parameters ?? GlobalDataService.Instance.CurrentProject.Nodes;
             foreach (var node in source)
             {
                 Convert(node, result);
@@ -49,24 +52,16 @@ namespace HierarchicalDataEditor.ViewModels
                 {
                     Windows.Storage.CachedFileManager.DeferUpdates(file);
                     await Windows.Storage.FileIO.WriteLinesAsync(file, result);
-                    Windows.Storage.Provider.FileUpdateStatus status =
-                        await Windows.Storage.CachedFileManager.CompleteUpdatesAsync(file);
-                    if (status != Windows.Storage.Provider.FileUpdateStatus.Complete)
+                    var state = await Windows.Storage.CachedFileManager.CompleteUpdatesAsync(file);
+                    if (state == FileUpdateStatus.Complete)
                     {
-                        await new ContentDialog
-                        {
-                            Content = "Update File Error",
-                        }.ShowAsync();
+                        await Launcher.LaunchFileAsync(file);
                     }
                 }
             }
             catch (Exception e)
             {
-                await new ContentDialog
-                {
-                    Title   = "Save Failed",
-                    Content = $"{e.Message}",
-                }.ShowAsync();
+                return; //Show Nothing
             }
 
         }
@@ -80,5 +75,7 @@ namespace HierarchicalDataEditor.ViewModels
                 Convert(item, container);
             }
         }
+
+        public IEnumerable<TreeNode> Parameters { get; set; }
     }
 }

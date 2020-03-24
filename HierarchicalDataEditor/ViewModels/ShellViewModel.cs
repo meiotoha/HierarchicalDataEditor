@@ -5,7 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Input;
-
+using Windows.ApplicationModel.Core;
+using Windows.Storage;
+using Windows.Storage.AccessCache;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 
@@ -17,6 +19,7 @@ using HierarchicalDataEditor.Services;
 using Microsoft.Toolkit.Uwp.Helpers;
 
 using Windows.System;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -26,6 +29,7 @@ namespace HierarchicalDataEditor.ViewModels
 {
     public class ShellViewModel : ViewModelBase
     {
+
         private readonly KeyboardAccelerator _altLeftKeyboardAccelerator = BuildKeyboardAccelerator(VirtualKey.Left, VirtualKeyModifiers.Menu);
         private readonly KeyboardAccelerator _backKeyboardAccelerator = BuildKeyboardAccelerator(VirtualKey.GoBack);
         private IList<KeyboardAccelerator> _keyboardAccelerators;
@@ -33,6 +37,7 @@ namespace HierarchicalDataEditor.ViewModels
         private ICommand _newProjectCommand;
         private ICommand _openProjectCommand;
         private ICommand _saveProjectCommand;
+        private ICommand _saveasProjectCommand;
         private ICommand _importSchemaCommand;
         private ICommand _exportSchemaCommand;
         private ICommand _importDataCommand;
@@ -42,6 +47,10 @@ namespace HierarchicalDataEditor.ViewModels
         public ICommand NewProjectCommand => _newProjectCommand ?? (_newProjectCommand = new RelayCommand(NewProject));
         public ICommand OpenProjectCommand => _openProjectCommand ?? (_openProjectCommand = new RelayCommand(OpenProject));
         public ICommand SaveProjectCommand => _saveProjectCommand ?? (_saveProjectCommand = new RelayCommand(SaveProject));
+        public ICommand SaveAsProjectCommand => _saveasProjectCommand ?? (_saveasProjectCommand = new RelayCommand(SaveAs));
+
+
+
         public ICommand ImportSchemaCommand => _importSchemaCommand ?? (_importSchemaCommand = new RelayCommand(ImportSchema));
         public ICommand ExportSchemaCommand => _exportSchemaCommand ?? (_exportSchemaCommand = new RelayCommand(ExportSchema));
         public ICommand ImportDataCommand => _importDataCommand ?? (_importDataCommand = new RelayCommand(ImportData));
@@ -104,7 +113,7 @@ namespace HierarchicalDataEditor.ViewModels
             var result = new ObservableCollection<TreeNode>();
             foreach (var flatData in root)
             {
-                var node = new TreeNode() {Code = flatData.Code, DisplayName = flatData.Name};
+                var node = new TreeNode() { NodeCode = flatData.Code, NodeName = flatData.Name };
                 BuildChildren(node, source);
                 result.Add(node);
             }
@@ -113,10 +122,10 @@ namespace HierarchicalDataEditor.ViewModels
 
         private void BuildChildren(TreeNode node, List<TreeNodeFlatData> source)
         {
-            var children = source.Where(x => x.ParentCode == node.Code).ToList();
+            var children = source.Where(x => x.ParentCode == node.NodeCode).ToList();
             foreach (var child in children)
             {
-                var chNode = new TreeNode(node){ Code = child.Code, DisplayName = child.Name};
+                var chNode = new TreeNode(node) { NodeCode = child.Code, NodeName = child.Name };
                 BuildChildren(chNode, source);
                 node.Items.Add(chNode);
             }
@@ -125,6 +134,7 @@ namespace HierarchicalDataEditor.ViewModels
 
         private void NewProject()
         {
+            GlobalDataService.Instance.OriginHashCode = 0;
             GlobalDataService.Instance.CurrentProjectFile = null;
             GlobalDataService.Instance.CurrentProject = new HDEProject();
             MenuNavigationHelper.UpdateView(typeof(TreeViewEditorViewModel).FullName, "reload" + DateTime.Now.Ticks);
@@ -149,8 +159,10 @@ namespace HierarchicalDataEditor.ViewModels
                             if (result != null)
                             {
                                 GlobalDataService.Instance.CurrentProject = result;
+                                GlobalDataService.Instance.OriginHashCode = result.GetHashCode();
                                 GlobalDataService.Instance.CurrentProjectFile = file.Path;
                                 MenuNavigationHelper.UpdateView(typeof(TreeViewEditorViewModel).FullName, "reload" + DateTime.Now.Ticks);
+                                StorageApplicationPermissions.FutureAccessList.AddOrReplace("futureAccessToken", file);
                             }
                             else
                             {
@@ -166,11 +178,12 @@ namespace HierarchicalDataEditor.ViewModels
                 {
                     Title = "Load Failed",
                     Content = $"{e.Message}",
+                    PrimaryButtonText = "Ok"
                 }.ShowAsync();
             }
         }
 
-        private async void SaveProject()
+        private async void SaveAs()
         {
             try
             {
@@ -191,8 +204,52 @@ namespace HierarchicalDataEditor.ViewModels
                         await new ContentDialog
                         {
                             Content = "Update File Error",
+                            PrimaryButtonText = "Ok"
                         }.ShowAsync();
                     }
+
+                    GlobalDataService.Instance.CurrentProjectFile = file.Path;
+                    GlobalDataService.Instance.OriginHashCode = GlobalDataService.Instance.HashCode;
+                }
+            }
+            catch (Exception e)
+            {
+                await new ContentDialog
+                {
+                    Title = "Save Failed",
+                    Content = $"{e.Message}",
+                }.ShowAsync();
+            }
+        }
+
+        private async void SaveProject()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(GlobalDataService.Instance.CurrentProjectFile))
+                {
+                    SaveAs();
+                    return;
+                }
+
+                Windows.Storage.StorageFile file =
+                    await StorageFile.GetFileFromPathAsync(GlobalDataService.Instance.CurrentProjectFile);
+                if (file != null)
+                {
+                    Windows.Storage.CachedFileManager.DeferUpdates(file);
+                    var obj = GlobalDataService.Instance.CurrentProject;
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+                    await Windows.Storage.FileIO.WriteTextAsync(file, json);
+                    Windows.Storage.Provider.FileUpdateStatus status =
+                        await Windows.Storage.CachedFileManager.CompleteUpdatesAsync(file);
+                    if (status != Windows.Storage.Provider.FileUpdateStatus.Complete)
+                    {
+                        await new ContentDialog
+                        {
+                            Content = "Update File Error",
+                        }.ShowAsync();
+                    }
+                    GlobalDataService.Instance.OriginHashCode = GlobalDataService.Instance.HashCode;
                 }
             }
             catch (Exception e)
@@ -212,7 +269,7 @@ namespace HierarchicalDataEditor.ViewModels
                 var picker = new Windows.Storage.Pickers.FileOpenPicker();
                 picker.ViewMode = Windows.Storage.Pickers.PickerViewMode.List;
                 picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
-                picker.FileTypeFilter.Add(".hdes");
+                picker.FileTypeFilter.Add(".json");
                 var file = await picker.PickSingleFileAsync();
                 if (file != null)
                 {
@@ -241,6 +298,7 @@ namespace HierarchicalDataEditor.ViewModels
                 {
                     Title = "Load Failed",
                     Content = $"{e.Message}",
+                    PrimaryButtonText = "Ok"
                 }.ShowAsync();
             }
         }
@@ -251,7 +309,7 @@ namespace HierarchicalDataEditor.ViewModels
             {
                 var picker = new Windows.Storage.Pickers.FileSavePicker();
                 picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
-                picker.FileTypeChoices.Add("HDE Schema File", new List<string> { ".hdes" });
+                picker.FileTypeChoices.Add("HDE Schema File(JSON)", new List<string> { ".json" });
                 Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
                 if (file != null)
                 {
@@ -266,6 +324,7 @@ namespace HierarchicalDataEditor.ViewModels
                         await new ContentDialog
                         {
                             Content = "Update File Error",
+                            PrimaryButtonText = "Ok"
                         }.ShowAsync();
                     }
                 }
@@ -276,6 +335,7 @@ namespace HierarchicalDataEditor.ViewModels
                 {
                     Title = "Save Failed",
                     Content = $"{e.Message}",
+                    PrimaryButtonText = "Ok"
                 }.ShowAsync();
             }
         }
@@ -287,7 +347,7 @@ namespace HierarchicalDataEditor.ViewModels
                 var picker = new Windows.Storage.Pickers.FileOpenPicker();
                 picker.ViewMode = Windows.Storage.Pickers.PickerViewMode.List;
                 picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
-                picker.FileTypeFilter.Add(".hdex");
+                picker.FileTypeFilter.Add(".json");
                 var file = await picker.PickSingleFileAsync();
                 if (file != null)
                 {
@@ -316,6 +376,7 @@ namespace HierarchicalDataEditor.ViewModels
                 {
                     Title = "Load Failed",
                     Content = $"{e.Message}",
+                    PrimaryButtonText = "Ok"
                 }.ShowAsync();
             }
         }
@@ -326,7 +387,7 @@ namespace HierarchicalDataEditor.ViewModels
             {
                 var picker = new Windows.Storage.Pickers.FileSavePicker();
                 picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
-                picker.FileTypeChoices.Add("HDE Data File", new List<string> { ".hdex" });
+                picker.FileTypeChoices.Add("Json File", new List<string> { ".json" });
                 Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
                 if (file != null)
                 {
@@ -341,6 +402,7 @@ namespace HierarchicalDataEditor.ViewModels
                         await new ContentDialog
                         {
                             Content = "Update File Error",
+                            PrimaryButtonText = "Ok"
                         }.ShowAsync();
                     }
                 }
@@ -351,13 +413,14 @@ namespace HierarchicalDataEditor.ViewModels
                 {
                     Title = "Save Failed",
                     Content = $"{e.Message}",
+                    PrimaryButtonText = "Ok"
                 }.ShowAsync();
             }
         }
 
         private async void ExportDataEx()
         {
-           await MenuNavigationHelper.OpenInDialog(typeof(TemplateExporterPage));
+          await MenuNavigationHelper.OpenInDialog(typeof(TemplateExporterPage));
         }
 
 
@@ -381,6 +444,13 @@ namespace HierarchicalDataEditor.ViewModels
 
         public ShellViewModel()
         {
+            GlobalDataService.Instance.TitleNameChanged += Instance_TitleNameChanged;
+        }
+
+        private void Instance_TitleNameChanged(string obj)
+        {
+            var view = ApplicationView.GetForCurrentView();
+            view.Title = obj;
         }
 
         public void Initialize(Frame shellFrame, SplitView splitView, Frame rightFrame, IList<KeyboardAccelerator> keyboardAccelerators)
@@ -399,11 +469,11 @@ namespace HierarchicalDataEditor.ViewModels
         }
 
 
-        private void OnMenuViewsSchemaEditor() => MenuNavigationHelper.UpdateView(typeof(SchemaEditorViewModel).FullName);
+        private void OnMenuViewsSchemaEditor() => MenuNavigationHelper.UpdateView(typeof(SchemaEditorViewModel).FullName, DateTime.Now);
 
-        private void OnMenuViewsTreeViewEditor() => MenuNavigationHelper.UpdateView(typeof(TreeViewEditorViewModel).FullName);
+        private void OnMenuViewsTreeViewEditor() => MenuNavigationHelper.UpdateView(typeof(TreeViewEditorViewModel).FullName, DateTime.Now);
 
-        private void OnMenuViewsTemplateExporter() => MenuNavigationHelper.UpdateView(typeof(TemplateExporterViewModel).FullName);
+        private void OnMenuViewsTemplateExporter() => MenuNavigationHelper.UpdateView(typeof(TemplateExporterViewModel).FullName, DateTime.Now);
 
         private void OnMenuFileExit()
         {

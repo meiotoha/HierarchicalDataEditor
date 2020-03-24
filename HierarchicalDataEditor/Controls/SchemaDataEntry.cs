@@ -15,7 +15,6 @@ namespace HierarchicalDataEditor.Controls
 {
     public sealed class SchemaDataEntry : Control
     {
-
         public static readonly DependencyProperty KeyProperty = DependencyProperty.Register(
             "Key", typeof(string), typeof(SchemaDataEntry), new PropertyMetadata(default(string)));
 
@@ -25,18 +24,8 @@ namespace HierarchicalDataEditor.Controls
             set { SetValue(KeyProperty, value); }
         }
 
-
-        public static readonly DependencyProperty TypeProperty = DependencyProperty.Register(
-            "Type", typeof(string), typeof(SchemaDataEntry), new PropertyMetadata(default(string)));
-
-        public string Type
-        {
-            get { return (string) GetValue(TypeProperty); }
-            set { SetValue(TypeProperty, value); }
-        }
-
         public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(
-            "Value", typeof(string), typeof(SchemaDataEntry), new PropertyMetadata(default(object)));
+            "Value", typeof(string), typeof(SchemaDataEntry), new PropertyMetadata(default(string)));
 
         public string Value
         {

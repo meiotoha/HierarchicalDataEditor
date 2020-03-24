@@ -94,7 +94,6 @@ namespace HierarchicalDataEditor.Controls
                 .Select(x => new DataSchemaEditItem
                 {
                     Key = x.Key,
-                    Type = x.Type,
                     Value = null
                 }).ToList();
             if (SchemaItems != null)

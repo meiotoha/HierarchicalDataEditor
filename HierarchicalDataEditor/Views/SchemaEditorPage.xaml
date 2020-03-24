@@ -26,7 +26,7 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
             <StackPanel Orientation="Horizontal">
-                <Button Content="Save" Command="{x:Bind ViewModel.SaveCommand}" Width="60" Margin="10"/>
+                <!--<Button Content="Save" Command="{x:Bind ViewModel.SaveCommand}" Width="60" Margin="10"/>-->
                 <Button Content="Clear" Command="{x:Bind ViewModel.ClearCommand}" Width="60" Margin="10"/>
                 <Button Content="Add" Command="{x:Bind ViewModel.AddCommand}" Width="60" Margin="10"/>
             </StackPanel>
@@ -39,7 +39,6 @@
                 ItemsSource="{x:Bind ViewModel.Source, Mode=OneWay}">
                 <controls:DataGrid.Columns>
                     <controls:DataGridTextColumn  MinWidth="200"  Binding="{Binding Key}" Header="PropertyName" />
-                    <controls:DataGridComboBoxColumn Width="120" ItemsSource="{x:Bind ViewModel.DataType}" Binding="{Binding Type}" Header="DataType" />
                     <controls:DataGridTemplateColumn Width="120" Header="Operation">
                         <controls:DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

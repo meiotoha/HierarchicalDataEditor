@@ -4,7 +4,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Style="{StaticResource PageStyle}"
+    HorizontalAlignment="Left"
+    VerticalAlignment="Top"
+    Width="480"
+    Height="640"
     mc:Ignorable="d">
     <Grid x:Name="ContentArea" Margin="{StaticResource MediumLeftRightMargin}">
         <Grid.RowDefinitions>
@@ -18,17 +21,13 @@
             Style="{StaticResource PageTitleStyle}" />
         <Grid
             Grid.Row="1" 
-            Background="{ThemeResource SystemControlPageBackgroundChromeLowBrush}">
-            <!--
-                The SystemControlPageBackgroundChromeLowBrush background represents where you should place your content. 
-                Place your content here.
-            -->
+            Background="Transparent">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="60"/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
-            <TextBox Grid.Row="1" Text="{x:Bind ViewModel.Template,Mode=TwoWay}" TextWrapping="Wrap"/>
-            <Button Grid.Row="0" Content="Export" Command="{x:Bind ViewModel.ExportCommand}" />
+            <TextBox Grid.Row="1" Text="{x:Bind ViewModel.Template,Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True"/>
+            <Button HorizontalAlignment="Stretch" Grid.Row="0" Content="Export" Command="{x:Bind ViewModel.ExportCommand}" />
         </Grid>
     </Grid>
 </Page>

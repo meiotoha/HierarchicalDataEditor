@@ -17,6 +17,8 @@ namespace HierarchicalDataEditor.Core.Services
 
         public HDEProject CurrentProject { get; set; }
         public string CurrentProjectFile { get; set; }
-
+        public int OriginHashCode { get; set; }
+        public int HashCode => CurrentProject?.GetHashCode() ?? 0;
+        public Action<string> TitleNameChanged { get; set; }
     }
 }

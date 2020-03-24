@@ -19,31 +19,37 @@ namespace HierarchicalDataEditor.ViewModels
 
         public SchemaEditorViewModel()
         {
+        }
 
+        private void Source_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            Save();
         }
 
         public Task Load()
         {
+            Source.CollectionChanged -= Source_CollectionChanged;
+            foreach (var item in Source)
+            {
+                item.PropertyChanged -= S_PropertyChanged;
+            }
             this.Source.Clear();
             if (GlobalDataService.Instance.CurrentProject.Schema.Properties != null)
             {
                 foreach (var s in GlobalDataService.Instance.CurrentProject.Schema.Properties)
                 {
+                    s.PropertyChanged += S_PropertyChanged;
                     this.Source.Add(s);
                 }
             }
+            Source.CollectionChanged += Source_CollectionChanged;
             return Task.CompletedTask;
         }
 
-        private static List<DataSchemaType> DataTypeCore = new List<DataSchemaType>
+        private void S_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-             {DataSchemaType.String},
-             {DataSchemaType.Boolean},
-             {DataSchemaType.Float},
-             {DataSchemaType.Integer},
-        };
-
-        public List<DataSchemaType> DataType => DataTypeCore;
+            Save();
+        }
 
         private ICommand _saveCommand;
         private ICommand _addCommand;
@@ -65,7 +71,7 @@ namespace HierarchicalDataEditor.ViewModels
         }
         private void Add()
         {
-            Source.Add(new DataSchemaItem { Key = "New Property", Type = DataSchemaType.String });
+            Source.Add(new DataSchemaItem { Key = "New Property" });
         }
         private void Delete(DataSchemaItem i)
         {

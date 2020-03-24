@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HierarchicalDataEditor.Services;
@@ -33,6 +34,11 @@ namespace HierarchicalDataEditor
         }
 
         protected override async void OnActivated(IActivatedEventArgs args)
+        {
+            await ActivationService.ActivateAsync(args);
+        }
+
+        protected override async void OnFileActivated(FileActivatedEventArgs args)
         {
             await ActivationService.ActivateAsync(args);
         }

@@ -14,6 +14,8 @@ using GalaSoft.MvvmLight.Command;
 using HierarchicalDataEditor.Core.Models;
 using Windows.UI.Xaml.Controls;
 using HierarchicalDataEditor.Core.Services;
+using HierarchicalDataEditor.Helpers;
+using HierarchicalDataEditor.Views;
 using WinUI = Microsoft.UI.Xaml.Controls;
 
 namespace HierarchicalDataEditor.ViewModels
@@ -30,6 +32,8 @@ namespace HierarchicalDataEditor.ViewModels
         private ICommand _addAfterCommand;
         private ICommand _clearChildrenCommand;
         private ICommand _deleteCommand;
+
+        private ICommand _exportCommand;
 
 
         private object _selectedItem;
@@ -54,6 +58,10 @@ namespace HierarchicalDataEditor.ViewModels
         public ICommand AddChildCommand => _addChildCommand ?? (_addChildCommand = new RelayCommand<TreeNode>(AddChild));
         public ICommand BatchAddChildCommand => _baddChildCommand ?? (_baddChildCommand = new RelayCommand<TreeNode>(BatchAdd));
 
+        public ICommand ExportChildrenCommand => _exportCommand ?? (_exportCommand = new RelayCommand<TreeNode>(ExportChildren));
+
+
+
         internal void FixNodes()
         {
             Fix(null, Nodes);
@@ -72,14 +80,20 @@ namespace HierarchicalDataEditor.ViewModels
         {
             Nodes.Add(new TreeNode
             {
-                DisplayName = "NewNode",
-                Code = "NewCode"
+                NodeName = "NewNode",
+                NodeCode = "NewCode"
             });
         }
 
-        private void Clear()
+        private async void Clear()
         {
-            Nodes.Clear();
+            if (await new ContentDialog
+            { Content = "Clear All Nodes?", PrimaryButtonText = "Yes", SecondaryButtonText = "Cancel" }
+                .ShowAsync() == ContentDialogResult.Primary)
+            {
+                Nodes.Clear();
+
+            }
         }
         private void OnItemInvoked(WinUI.TreeViewItemInvokedEventArgs args)
             => SelectedItem = args.InvokedItem;
@@ -103,8 +117,8 @@ namespace HierarchicalDataEditor.ViewModels
         {
             obj.Items.Add(new TreeNode(obj)
             {
-                DisplayName = "NewNode",
-                Code = "NewCode"
+                NodeName = "NewNode",
+                NodeCode = "NewCode"
             });
         }
         private void AddAfter(TreeNode obj)
@@ -114,8 +128,8 @@ namespace HierarchicalDataEditor.ViewModels
                 var index = Nodes.IndexOf(obj);
                 Nodes.Insert(index + 1, new TreeNode(obj.Parent)
                 {
-                    DisplayName = "NewNode",
-                    Code = "NewCode"
+                    NodeName = "NewNode",
+                    NodeCode = "NewCode"
                 });
             }
             else
@@ -123,31 +137,41 @@ namespace HierarchicalDataEditor.ViewModels
                 var index = obj.Parent.Items.IndexOf(obj);
                 obj.Parent.Items.Insert(index + 1, new TreeNode
                 {
-                    DisplayName = "NewNode",
-                    Code = "NewCode"
+                    NodeName = "NewNode",
+                    NodeCode = "NewCode"
                 });
             }
 
         }
-        private void ClearChildren(TreeNode obj)
+        private async void ClearChildren(TreeNode obj)
         {
-            obj.Items.Clear();
+            if (await new ContentDialog { Content = "Clear All Children?", PrimaryButtonText = "Yes", SecondaryButtonText = "Cancel" }.ShowAsync() == ContentDialogResult.Primary)
+            {
+                obj.Items.Clear();
+            }
         }
-        private void Delete(TreeNode obj)
+        private async void Delete(TreeNode obj)
         {
-            if (obj.Parent == null)
+            if (await new ContentDialog
+            { Content = $"Remove This [{obj.NodeName}] Node?", PrimaryButtonText = "Yes", SecondaryButtonText = "Cancel" }
+                .ShowAsync() == ContentDialogResult.Primary)
             {
-                Nodes.Remove(obj);
+                if (obj.Parent == null)
+                {
+                    Nodes.Remove(obj);
+                }
+                else
+                {
+                    obj.Parent.Items.Remove(obj);
+                }
             }
-            else
-            {
-                obj.Parent.Items.Remove(obj);
-            }
-
         }
         private async void BatchAdd(TreeNode obj)
         {
-            var tb = new TextBox();
+            var tb = new TextBox()
+            {
+                AcceptsReturn = true
+            };
             var dlg = new ContentDialog
             {
                 Content = tb,
@@ -157,16 +181,51 @@ namespace HierarchicalDataEditor.ViewModels
 
             if (result == ContentDialogResult.Primary)
             {
-                var texts = tb.Text.TrimStart().TrimEnd().Replace("\r", "").Replace("\n", " ").Split(' ');
+                var texts = tb.Text
+                    .Replace('\r', '\n')
+                    .Split("\n");
+
+                var schema = GlobalDataService.Instance.CurrentProject.Schema.Properties ?? new List<DataSchemaItem>();
+                //Import as csv
                 foreach (var text in texts)
                 {
-                    obj.Items.Add(new TreeNode(obj)
+                    if (!string.IsNullOrWhiteSpace(text))
                     {
-                        DisplayName = text.TrimStart().TrimEnd(),
-                        Code = "NewCode"
-                    });
+                        var arrs = text.Split(',');
+                        var nNode = new TreeNode(obj)
+                        {
+                            NodeName = arrs[0].TrimStart().TrimEnd(),
+                            NodeCode = "NewCode"
+                        };
+                        if (arrs.Length > 1)
+                        {
+                            nNode.NodeCode = arrs[1].TrimStart().TrimEnd();
+                        }
+                        if (arrs.Length > 2 && schema.Count > 0)
+                        {
+                            for (int i = 2; i < arrs.Length; i++)
+                            {
+                                if (schema.Count > i - 2)
+                                {
+                                    var val = arrs[i].TrimStart().TrimEnd();
+                                    var sce = schema[i - 2];
+                                    nNode.CoreData[sce.Key] = val;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        obj.Items.Add(nNode);
+                    }
                 }
             }
+        }
+
+        private async void ExportChildren(TreeNode obj)
+        {
+            await MenuNavigationHelper.OpenInDialog(typeof(TemplateExporterPage), obj);
         }
     }
 }

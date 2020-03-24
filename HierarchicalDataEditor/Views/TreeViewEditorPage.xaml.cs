@@ -12,7 +12,7 @@ namespace HierarchicalDataEditor.Views
     // For other samples, get the XAML Controls Gallery app http://aka.ms/XamlControlsGallery
     public sealed partial class TreeViewEditorPage : Page
     {
-        private TreeViewEditorViewModel ViewModel
+        public TreeViewEditorViewModel ViewModel
         {
             get { return ViewModelLocator.Current.TreeViewEditorViewModel; }
         }
@@ -26,28 +26,6 @@ namespace HierarchicalDataEditor.Views
         {
             base.OnNavigatedTo(e);
             await ViewModel.Load();
-        }
-
-   
-
-        private void ClearChildren(object sender, Windows.UI.Xaml.RoutedEventArgs e)
-        {
-            ViewModel.ClearChildrenCommand.Execute(((sender) as MenuFlyoutItem).DataContext);
-        }
-
-        private void AddChild(object sender, Windows.UI.Xaml.RoutedEventArgs e)
-        {
-            ViewModel.AddChildCommand.Execute(((sender) as MenuFlyoutItem).DataContext);
-        }
-
-        private void AddAfter(object sender, Windows.UI.Xaml.RoutedEventArgs e)
-        {
-            ViewModel.AddAfterCommand.Execute(((sender) as MenuFlyoutItem).DataContext);
-        }
-
-        private void Delete(object sender, Windows.UI.Xaml.RoutedEventArgs e)
-        {
-            ViewModel.DeleteCommand.Execute(((sender) as MenuFlyoutItem).DataContext);
         }
 
         private void TreeViewItem_DropCompleted(Windows.UI.Xaml.UIElement sender, Windows.UI.Xaml.DropCompletedEventArgs args)
@@ -64,10 +42,6 @@ namespace HierarchicalDataEditor.Views
         {
             ViewModel.FixNodes();
         }
-
-        private void BatchAddChild(object sender, Windows.UI.Xaml.RoutedEventArgs e)
-        {
-            ViewModel.BatchAddChildCommand.Execute(((sender) as MenuFlyoutItem).DataContext);
-        }
+    
     }
 }

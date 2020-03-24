@@ -7,9 +7,7 @@ namespace HierarchicalDataEditor.Core.Models
     public class DataSchemaItem : Observable
     {
         private string _key;
-        private DataSchemaType _type;
         public string Key { get => _key; set => SetAndNotify(ref _key, value); }
-        public DataSchemaType Type { get => _type; set => SetAndNotify(ref _type, value); }
 
     }
 

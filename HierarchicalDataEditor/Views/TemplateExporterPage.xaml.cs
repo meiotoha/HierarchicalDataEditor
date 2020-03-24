@@ -3,6 +3,8 @@
 using HierarchicalDataEditor.ViewModels;
 
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Navigation;
+using HierarchicalDataEditor.Core.Models;
 
 namespace HierarchicalDataEditor.Views
 {
@@ -16,6 +18,20 @@ namespace HierarchicalDataEditor.Views
         public TemplateExporterPage()
         {
             InitializeComponent();
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            if (e.Parameter is TreeNode nd)
+            {
+                ViewModel.Parameters = nd.Items;
+            }
+            else
+            {
+                ViewModel.Parameters = null;
+            }
         }
     }
 }

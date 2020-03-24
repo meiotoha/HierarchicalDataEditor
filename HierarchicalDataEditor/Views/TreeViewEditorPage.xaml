@@ -11,6 +11,7 @@
     xmlns:ic="using:Microsoft.Xaml.Interactions.Core"
     xmlns:i="using:Microsoft.Xaml.Interactivity"
     xmlns:controls1="using:HierarchicalDataEditor.Controls"
+    xmlns:viewModels="using:HierarchicalDataEditor.ViewModels"
     Style="{StaticResource PageStyle}"
     x:Name="PageBase"
     mc:Ignorable="d">
@@ -19,18 +20,21 @@
         <DataTemplate x:Key="TreeTemplate" x:DataType="model:TreeNode">
             <winui:TreeViewItem
                 DropCompleted="TreeViewItem_DropCompleted"
-                AutomationProperties.Name="{Binding DisplayName}"
+                AutomationProperties.Name="{Binding NodeName}"
                 ItemsSource="{Binding Items}" IsExpanded="False">
                 <winui:TreeViewItem.ContextFlyout>
                     <MenuFlyout>
-                        <MenuFlyoutItem Text="AddChild" Click="AddChild" CommandParameter="{Binding}" />
-                        <MenuFlyoutItem Text="AddChildren" Click="BatchAddChild" CommandParameter="{Binding}" />
-                        <MenuFlyoutItem Text="AddAfter" Click="AddAfter" CommandParameter="{Binding}"/>
-                        <MenuFlyoutItem Text="Clear" Click="ClearChildren" CommandParameter="{Binding}"/>
-                        <MenuFlyoutItem Text="Delete" Click="Delete" CommandParameter="{Binding}"/>
+                        <MenuFlyoutItem Text="AddChild" Command="{x:Bind viewModels:ViewModelLocator.Current.TreeViewEditorViewModel.AddChildCommand}" CommandParameter="{Binding}" />
+                        <MenuFlyoutItem Text="AddChildren" Command="{x:Bind viewModels:ViewModelLocator.Current.TreeViewEditorViewModel.BatchAddChildCommand }" CommandParameter="{Binding}" />
+                        <MenuFlyoutItem Text="AddAfter" Command="{x:Bind viewModels:ViewModelLocator.Current.TreeViewEditorViewModel.AddAfterCommand }" CommandParameter="{Binding}"/>
+                        <MenuFlyoutSeparator/>
+                        <MenuFlyoutItem Text="Clear" Command="{x:Bind viewModels:ViewModelLocator.Current.TreeViewEditorViewModel.ClearChildrenCommand }"  CommandParameter="{Binding}"/>
+                        <MenuFlyoutItem Text="Delete" Command="{x:Bind viewModels:ViewModelLocator.Current.TreeViewEditorViewModel.DeleteCommand }"  CommandParameter="{Binding}"/>
+                        <MenuFlyoutSeparator/>
+                        <MenuFlyoutItem Text="ExportChildren" Command="{x:Bind viewModels:ViewModelLocator.Current.TreeViewEditorViewModel.ExportChildrenCommand }"   CommandParameter="{Binding}"/>
                     </MenuFlyout>
                 </winui:TreeViewItem.ContextFlyout>
-                <TextBlock Text="{Binding DisplayName}"
+                <TextBlock Text="{Binding NodeName}"
                            Margin="{StaticResource XXSmallTopRightBottomMargin}" />
             </winui:TreeViewItem>
         </DataTemplate>
@@ -38,9 +42,9 @@
         <DataTemplate x:Key="TreeNodeTemplate" x:DataType="model:TreeNode">
             <StackPanel>
                 <TextBlock Text="NodeName"/>
-                <TextBox Text="{Binding DisplayName,Mode=TwoWay}" Width="300" />
+                <TextBox Text="{Binding NodeName,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Width="300" />
                 <TextBlock Text="NodeCode"/>
-                <TextBox Text="{Binding Code,Mode=TwoWay}" Width="300" />
+                <TextBox Text="{Binding NodeCode,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Width="300" />
                 <controls1:SchemaDataEditor Value="{Binding CoreData,Mode=TwoWay}"/>
             </StackPanel>
         </DataTemplate>
@@ -71,16 +75,7 @@
                     Margin="{StaticResource SmallLeftMargin}"
                     Style="{StaticResource ListTitleStyle}"
                     VerticalAlignment="Center" />
-          
-                <Button
-                    Grid.Column="2"
-                    Content="Save"
-                    FontSize="14"
-                    Padding="{StaticResource SmallLeftRightMargin}"
-                    VerticalAlignment="Stretch"
-                    VerticalContentAlignment="Center"
-                    Command="{x:Bind ViewModel.SaveCommand}"
-                    Background="Transparent" />
+
                 <Button
                     Grid.Column="3"
                     x:Uid="TreeView_CollapseAllButton"
@@ -121,7 +116,7 @@
             Grid.Column="1"
             Padding="{StaticResource DetailPageMargin}">
             <ContentControl
-                Content="{x:Bind ViewModel.SelectedItem, Mode=OneWay}"
+                Content="{x:Bind ViewModel.SelectedItem}"
                 ContentTemplate="{StaticResource TreeNodeTemplate}" />
         </ScrollViewer>
 
